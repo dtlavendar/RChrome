@@ -1,187 +1,50 @@
-# Canvas RCA - Assignment Summarizer
+# Canvas RCA – Assignment Summarizer
 
-A sleek, standalone mini-app that detects Canvas assignment pages, extracts content, and provides AI-powered summaries along with external link extraction.
+A Chrome extension that detects Canvas assignment pages, extracts the prompt, summarises the requirements with an LLM and lists all external links referenced in the assignment.
 
-## 🚀 Features
+## Features
 
-- **Smart Detection**: Automatically detects Canvas assignment pages across different institutions
-- **AI Summarization**: Generates concise assignment summaries using LLM APIs
-- **Link Extraction**: Identifies and lists external links while filtering out Canvas-internal navigation
-- **Modern UI**: Clean, responsive design with smooth animations and accessibility features
-- **Error Handling**: Comprehensive error management with user-friendly messages
-- **Mobile-First**: Optimized for both desktop and mobile Canvas usage
+- Detects Canvas domains and only enables on pages that contain `/assignments/` in the URL.
+- Extracts assignment HTML, text content and external links (filters out Canvas-internal URLs).
+- Sends the content to an LLM endpoint (default: OpenAI Chat Completions) and renders the summary in the popup and directly on the page.
+- Caches the summary per-URL in `chrome.storage.local`; a cached summary is reused until the user chooses **Regenerate**.
+- Supports LaTeX via MathJax.
 
-## 📁 File Structure
+## File Overview
 
 ```
-├── hello.html      # Main HTML structure with header, toggle, and output sections
-├── popup.css       # Modern styling with light theme and responsive design
-├── popup.js        # Core functionality for detection, extraction, and API integration
-└── README.md       # This file
+hello.html        Popup UI markup
+popup.css         Popup styling
+popup.js          Extension logic (detection, extraction, API calls)
+contentScript.js  Renders the summary inside the Canvas page
+manifest.json     Chrome extension manifest (MV3)
 ```
 
-## 🛠️ Setup Instructions
+## Setup
 
-### 1. API Configuration
+1. Clone or download the repository.
+2. Open `popup.js` and set your API key and model name in `this.apiConfig`.
+3. Load the extension:
+   - Go to `chrome://extensions`.
+   - Enable *Developer mode*.
+   - Click *Load unpacked* and select the project folder.
+4. Optional: adjust domain patterns or selectors in `popup.js` if your Canvas instance uses custom markup.
 
-Open `popup.js` and update the API configuration section:
+## Usage
 
-```javascript
-this.apiConfig = {
-    endpoint: 'YOUR_LLM_ENDPOINT_HERE',     // e.g., 'https://api.openai.com/v1/chat/completions'
-    apiKey: 'YOUR_API_KEY_HERE',            // Your actual API key
-    model: 'gpt-3.5-turbo'                  // Adjust model as needed
-};
-```
+1. Navigate to a Canvas assignment page.
+2. Open the extension popup. The toggle becomes active when an assignment is detected.
+3. Enable the toggle. The extension extracts the assignment, calls the LLM and shows the summary.
+4. The summary is also displayed in a floating card on the assignment page. Click **Regenerate** in the popup to refresh the summary.
 
-### 2. Supported LLM APIs
+## Custom Prompt
 
-The app is configured for OpenAI's ChatGPT API by default, but can be adapted for:
+Add a prompt in the *Custom prompt* text area before enabling the toggle. The text is used as the system message for the LLM request and is stored in Chrome storage for reuse.
 
-- **OpenAI**: `https://api.openai.com/v1/chat/completions`
-- **Anthropic Claude**: `https://api.anthropic.com/v1/messages`
-- **Azure OpenAI**: `https://YOUR-RESOURCE.openai.azure.com/openai/deployments/YOUR-DEPLOYMENT/chat/completions?api-version=2023-05-15`
-- **Other compatible APIs**: Adjust the payload format in `callLLMAPI()` method
+## Storage and Privacy
 
-### 3. Canvas Institution Setup
-
-The app auto-detects Canvas environments using common patterns:
-
-- `*.instructure.com`
-- `canvas.*`
-- `learn.*`
-- `lms.*`
-- Plus common Canvas DOM selectors
-
-For custom Canvas domains, add your pattern to the `canvasPatterns` array in `detectCanvasEnvironment()`.
-
-## 🎯 Usage
-
-1. **Open the app**: Open `hello.html` in any modern web browser
-2. **Navigate to Canvas**: Go to any Canvas assignment page in another tab/window
-3. **Check status**: The app will automatically detect if you're on a valid assignment page
-4. **Enable summarizer**: Toggle the "Enable Canvas Summarizer" switch
-5. **View results**: The app will display the assignment summary and any external links found
-
-## 🎨 Design Features
-
-### Color Palette
-- Background: `#f9faff` (very light blue)
-- Cards: `#ffffff` with subtle shadows
-- Primary accent: `#3366ff` (blue)
-- Text: `#2d3748` (dark gray)
-
-### Typography
-- Font: Inter (with system fallbacks)
-- Responsive sizing with mobile-first approach
-
-### Components
-- Modern CSS-only toggle switches
-- Smooth loading animations
-- Accessible focus states
-- High contrast mode support
-
-## 🔧 Technical Details
-
-### Canvas Detection Logic
-
-The app uses a two-step detection process:
-
-1. **Domain Detection**: Checks for common Canvas hostnames
-2. **Content Detection**: Looks for assignment-specific DOM elements using multiple selectors:
-   - `.assignment-content`
-   - `#assignment_show`
-   - `[data-testid="assignment-description"]`
-   - And more...
-
-### Link Filtering
-
-External links are identified by excluding Canvas-internal patterns:
-- `/courses/`, `/modules/`, `/assignments/`
-- Navigation and system links
-- Anchor links (`#`) and email/tel links
-
-### Security Features
-
-- Content sanitization before API calls
-- XSS prevention in summary display
-- Secure external link handling (`rel="noopener noreferrer"`)
-- Input length limiting (4000 chars max)
-
-## 🚨 Error Handling
-
-The app handles various error scenarios:
-
-- **No Canvas detected**: Disables toggle with warning message
-- **No assignment found**: Shows "No assignment found" status
-- **API errors**: Displays user-friendly error messages
-- **Network failures**: Graceful degradation with retry suggestions
-- **Rate limiting**: Button disabling during processing
-
-## 🔧 Customization
-
-### Adding New Canvas Selectors
-
-To support additional Canvas versions, add selectors to the `assignmentSelectors` array:
-
-```javascript
-const assignmentSelectors = [
-    '.assignment-content',
-    '.your-custom-selector',  // Add your selector here
-    // ... existing selectors
-];
-```
-
-### Modifying the UI Theme
-
-Update the CSS variables in `popup.css`:
-
-```css
-:root {
-    --primary-color: #3366ff;     /* Change primary accent color */
-    --background-color: #f9faff;  /* Change background color */
-    --card-color: #ffffff;        /* Change card background */
-}
-```
-
-### API Integration
-
-For different LLM providers, modify the `callLLMAPI()` method:
-
-```javascript
-// Example for different API format
-const payload = {
-    prompt: `Summarize this assignment: ${assignmentData.content}`,
-    max_tokens: 300,
-    // ... provider-specific parameters
-};
-```
-
-## 📱 Browser Compatibility
-
-- Chrome 80+
-- Firefox 75+
-- Safari 13+
-- Edge 80+
-
-## 🎯 Demo Mode
-
-The app includes a built-in demo mode when no API key is configured. It will:
-- Show a mock loading animation
-- Generate a sample summary based on detected keywords
-- Display the interface without making actual API calls
-
-## 🛡️ Privacy & Security
-
-- No data is stored locally
-- Assignment content is only sent to your configured LLM API
-- All external links open in new tabs with security headers
-- Content is sanitized before processing
-
-## Contributing
-
-Feel free to submit issues, feature requests, or pull requests to improve the Canvas Assignment Summarizer.
+Summaries are stored locally in the browser's extension storage and are keyed by the full assignment URL. No data is transmitted anywhere except to your configured LLM endpoint.
 
 ## License
 
-This project is open-source and available under the MIT License.
+MIT
