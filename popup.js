@@ -20,7 +20,7 @@ class CanvasSummarizer {
         // Configuration - Replace with your actual API details
         this.apiConfig = {
             endpoint: 'https://api.openai.com/v1/chat/completions', // Replace with your LLM endpoint
-            apiKey: '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', // Replace with your actual API key
+            apiKey: 'YOUR_API_KEY_HERE', // Replace with your actual API key
             model: 'gpt-4o-mini' // Adjust model as needed
         };
         
