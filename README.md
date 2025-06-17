@@ -1,4 +1,4 @@
-# Canvas RCA – Assignment Summarizer
+# RCA – Read Canvas Assignments
 
 A Chrome extension that detects Canvas assignment pages, extracts the prompt, summarises the requirements with an LLM and lists all external links referenced in the assignment.
 
